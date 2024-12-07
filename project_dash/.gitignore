@@ -1,0 +1,14 @@
+# Ignore the token.json file
+project_dash/token.json
+project_dash/credentials.json
+
+# Ignore all .env files
+*.env
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
