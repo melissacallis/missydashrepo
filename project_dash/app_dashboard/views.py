@@ -67,7 +67,11 @@ def home(request):
     ]
 
     # Fetch Google Calendar events
-    calendar_events = fetch_calendar_events()
+       # Authenticate and get the service
+    service = authenticate_and_get_service()
+
+    # Fetch calendar events
+    calendar_events = fetch_calendar_events(service)
     
     zen_saying = get_zen_saying()
 
@@ -251,6 +255,8 @@ def fetch_weather():
 
     return current_weather, forecast_list
 
+
+
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -260,104 +266,66 @@ from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-def fetch_calendar_events():
-    """
-    Fetch upcoming Google Calendar events and ensure token refresh is handled.
-    """
+def authenticate_and_get_service():
+    """Authenticate and return a Google Calendar API service object."""
     creds = None
-    token_path = 'token.json'
-    credentials_path = 'credentials.json'
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
 
-    try:
-        # Check if credentials.json exists
-        if not os.path.exists(credentials_path):
-            print(f"Credentials file not found at {credentials_path}")
-            return []
-
-        # Load credentials from token.json if it exists
-        if os.path.exists(token_path):
-            print(f"Loading token from {token_path}")
-            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
-
-        # Refresh the token if expired and refresh token is available
+    if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            print("Refreshing token...")
-            try:
-                creds.refresh(Request())
-                print("Token refreshed successfully.")
-            except Exception as refresh_error:
-                print(f"Error refreshing token: {refresh_error}")
-                creds = None  # Reset creds to trigger a new OAuth flow
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES)
+            
+            # Specify the redirect URI explicitly
+            flow.redirect_uri = "https://musical-space-system-p4pjw7w57gr279v9-8000.app.github.dev/"
+            
+            creds = flow.run_local_server(port=0)
 
-        # If no valid credentials, initiate the OAuth flow
-        if not creds or not creds.valid:
-            print("No valid credentials found. Initiating OAuth flow...")
-            try:
-                flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
-                creds = flow.run_local_server(port=0)
-                print("OAuth flow completed successfully.")
-            except Exception as oauth_error:
-                print(f"Error during OAuth flow: {oauth_error}")
-                return []
+        # Save the credentials for the next run
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
 
-            # Save the new credentials to token.json
-            try:
-                print(f"Saving token to {token_path}")
-                with open(token_path, 'w') as token_file:
-                    token_file.write(creds.to_json())
-                print(f"Token saved successfully at {token_path}")
-            except Exception as save_error:
-                print(f"Error saving token: {save_error}")
-                return []
+    service = build('calendar', 'v3', credentials=creds)
+    return service
 
-        # Build the Google Calendar API service
-        service = build('calendar', 'v3', credentials=creds)
 
-        # Fetch events
-        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        events_result = service.events().list(
-            calendarId='primary',
-            timeMin=now,
-            maxResults=10,
-            singleEvents=True,
-            orderBy='startTime'
-        ).execute()
-        events = events_result.get('items', [])
-
-        # Format events
-        formatted_events = []
-        for event in events:
-            event_datetime = event['start'].get('dateTime', event['start'].get('date', ''))
-            date_part, time_part = format_event_datetime(event_datetime)
-            formatted_events.append({
-                "date": date_part,
-                "time": time_part,
-                "summary": event.get("summary", "No Title"),
-            })
-
-        return formatted_events
-
-    except Exception as e:
-        print(f"Error fetching calendar events: {e}")
+def fetch_calendar_events(service):
+    """Fetch the last 7 days of Google Calendar events."""
+    now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+    seven_days_ago = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
+    
+    # Call the Calendar API to fetch events
+    events_result = service.events().list(
+        calendarId='primary',
+        timeMin=seven_days_ago,
+        timeMax=now,
+        singleEvents=True,
+        orderBy='startTime'
+    ).execute()
+    
+    events = events_result.get('items', [])
+    
+    if not events:
+        print('No events found.')
         return []
+    
+    # Format events
+    formatted_events = []
+    for event in events:
+        start = event['start'].get('dateTime', event['start'].get('date'))
+        summary = event.get('summary', 'No Title')
+        formatted_events.append({'start': start, 'summary': summary})
+        print(f"{start} - {summary}")
+    
+    return formatted_events
 
-
-
-def format_event_datetime(event_datetime):
-    """
-    Format a Google Calendar event's dateTime into separate date and time fields.
-    """
-    try:
-        if 'T' in event_datetime:  # Full dateTime with time
-            date_part, time_part = event_datetime.split('T')
-            time_part = time_part.split('+')[0].split('-')[0]  # Remove timezone offsets
-            return date_part, time_part
-        else:  # Only date is present
-            return event_datetime, None
-    except Exception as e:
-        print(f"Error formatting event datetime: {e}")
-        return "Invalid Date", "Invalid Time"
-
+if __name__ == '__main__':
+    # Authenticate and fetch calendar events
+    service = authenticate_and_get_service()
+    events = fetch_calendar_events(service)
 
     
 def fetch_nytimes_headlines():
