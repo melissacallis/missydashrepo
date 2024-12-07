@@ -90,11 +90,7 @@ def home(request):
 
     sports_headlines= fetch_sports_headlines()
     
-    # Pass data to the template
-    # Fetch YouTube Shorts
-    youtube_shorts = fetch_youtube_shorts()
-    
-        
+          
     context = {
         'current': current_weather,
         'forecast': forecast_list,
@@ -102,7 +98,6 @@ def home(request):
         'nytimes_headlines': nytimes_headlines,
         'zen_saying': get_zen_saying(),
         "stocks": stock_data,
-        "youtube_shorts": youtube_shorts,
         'sports_headlines': sports_headlines,
         
         }  # Add NY Times headlines to the
@@ -256,50 +251,80 @@ def fetch_weather():
 
     return current_weather, forecast_list
 
-def format_event_datetime(event_datetime):
-    """
-    Safely splits event_datetime into date and time, handling potential timezone offsets.
-    """
-    try:
-        if 'T' in event_datetime:  # If `dateTime` includes a time part
-            date_part, time_part = event_datetime.split('T')
-            time_part = time_part.split('+')[0].split('-')[0]  # Remove timezone offset if present
-            return date_part, time_part
-        else:  # If only `date` is present
-            return event_datetime, None  # Return only date
-    except Exception as e:
-        print(f"Error formatting datetime: {e}")
-        return "Invalid Date", "Invalid Time"
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+import os
+from datetime import datetime
+from googleapiclient.discovery import build
 
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 def fetch_calendar_events():
     """
-    Fetch upcoming Google Calendar events and format their date and time fields.
+    Fetch upcoming Google Calendar events and ensure token refresh is handled.
     """
-    # Replace the mock data with the actual API call as shown below:
+    creds = None
+    token_path = 'token.json'
+    credentials_path = 'credentials.json'
+
     try:
-        creds = None
-        if os.path.exists('token.json'):
-            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-        
-        if not creds or not creds.valid:
-            if creds and creds.expired and creds.refresh_token:
+        # Check if credentials.json exists
+        if not os.path.exists(credentials_path):
+            print(f"Credentials file not found at {credentials_path}")
+            return []
+
+        # Load credentials from token.json if it exists
+        if os.path.exists(token_path):
+            print(f"Loading token from {token_path}")
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+
+        # Refresh the token if expired and refresh token is available
+        if creds and creds.expired and creds.refresh_token:
+            print("Refreshing token...")
+            try:
                 creds.refresh(Request())
-            else:
-                flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+                print("Token refreshed successfully.")
+            except Exception as refresh_error:
+                print(f"Error refreshing token: {refresh_error}")
+                creds = None  # Reset creds to trigger a new OAuth flow
+
+        # If no valid credentials, initiate the OAuth flow
+        if not creds or not creds.valid:
+            print("No valid credentials found. Initiating OAuth flow...")
+            try:
+                flow = InstalledAppFlow.from_client_secrets_file(credentials_path, SCOPES)
                 creds = flow.run_local_server(port=0)
-            
-            with open('token.json', 'w') as token:
-                token.write(creds.to_json())
-        
+                print("OAuth flow completed successfully.")
+            except Exception as oauth_error:
+                print(f"Error during OAuth flow: {oauth_error}")
+                return []
+
+            # Save the new credentials to token.json
+            try:
+                print(f"Saving token to {token_path}")
+                with open(token_path, 'w') as token_file:
+                    token_file.write(creds.to_json())
+                print(f"Token saved successfully at {token_path}")
+            except Exception as save_error:
+                print(f"Error saving token: {save_error}")
+                return []
+
+        # Build the Google Calendar API service
         service = build('calendar', 'v3', credentials=creds)
-        now = datetime.utcnow().isoformat() + 'Z'
-        events_result = service.events().list(calendarId='primary', timeMin=now,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
+
+        # Fetch events
+        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=now,
+            maxResults=10,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
         events = events_result.get('items', [])
-        print(f"Raw events: {events}")
-        
+
+        # Format events
         formatted_events = []
         for event in events:
             event_datetime = event['start'].get('dateTime', event['start'].get('date', ''))
@@ -309,12 +334,30 @@ def fetch_calendar_events():
                 "time": time_part,
                 "summary": event.get("summary", "No Title"),
             })
-            
+
         return formatted_events
 
     except Exception as e:
         print(f"Error fetching calendar events: {e}")
         return []
+
+
+
+def format_event_datetime(event_datetime):
+    """
+    Format a Google Calendar event's dateTime into separate date and time fields.
+    """
+    try:
+        if 'T' in event_datetime:  # Full dateTime with time
+            date_part, time_part = event_datetime.split('T')
+            time_part = time_part.split('+')[0].split('-')[0]  # Remove timezone offsets
+            return date_part, time_part
+        else:  # Only date is present
+            return event_datetime, None
+    except Exception as e:
+        print(f"Error formatting event datetime: {e}")
+        return "Invalid Date", "Invalid Time"
+
 
     
 def fetch_nytimes_headlines():
@@ -365,71 +408,6 @@ def fetch_nytimes_headlines():
 
 
 
-def fetch_youtube_shorts():
-    """
-    Fetch the top two sports-related YouTube Shorts.
-    """
-    
-    API_KEY = os.getenv("YOUTUBE_API_KEY")
-
-    if not API_KEY:
-        print("YouTube API key not found in environment variables.")
-        return []
-
-    # Build the YouTube API client
-    youtube = build("youtube", "v3", developerKey=API_KEY)
-
-    # Define search parameters
-    search_params = {
-        "part": "snippet",
-        "maxResults": 10,  # Fetch more results to filter later
-        "q": "sports #shorts",  # Include "sports" keyword and Shorts hashtag
-        "type": "video",
-        "videoDuration": "any",  # Fetch videos of any length
-        "order": "viewCount",    # Order by view count
-        "safeSearch": "moderate" # Safe search filter
-    }
-
-    try:
-        # Fetch search results
-        response = youtube.search().list(**search_params).execute()
-        video_ids = [item["id"]["videoId"] for item in response.get("items", [])]
-
-        # Fetch video details for duration and filtering
-        videos_response = youtube.videos().list(
-            part="snippet,contentDetails",
-            id=",".join(video_ids)
-        ).execute()
-
-        shorts = []
-        for video in videos_response.get("items", []):
-            duration = video["contentDetails"]["duration"]
-            snippet = video["snippet"]
-            duration_seconds = isodate.parse_duration(duration).total_seconds()
-
-            # Filter for videos less than or equal to 60 seconds
-            if duration_seconds <= 60:
-                shorts.append({
-                    "video_id": video["id"],
-                    "title": snippet["title"],
-                    "description": snippet["description"],
-                    "thumbnail_url": snippet["thumbnails"]["high"]["url"],
-                    "video_url": f"https://www.youtube.com/watch?v={video['id']}"
-                })
-
-            # Stop when we have 2 Shorts
-            if len(shorts) == 2:
-                break
-
-        return shorts
-
-    except Exception as e:
-        print(f"Error fetching YouTube Shorts: {e}")
-        return []
-
-    except Exception as e:
-        print(f"Error fetching YouTube Shorts: {e}")
-        return []
 
 
 

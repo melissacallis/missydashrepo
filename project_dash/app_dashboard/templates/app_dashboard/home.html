@@ -293,46 +293,9 @@ background-attachment: fixed;
         
     
 <!-- Shared Row: YouTube Shorts and Google Calendar Events -->
-<div class="row mb-4">
-    <!-- Left Column: YouTube Shorts and Arlo Recordings -->
-    <div class="col-md-6">
-        <!-- YouTube Shorts Section -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2>YouTube Shorts</h2>
-            </div>
-            <div class="card-body">
-                {% if youtube_shorts %}
-                <div class="row">
-                    {% for short in youtube_shorts %}
-                    <div class="col-md-6 mb-4">
-                        <div class="card h-100">
-                            <a href="{{ short.video_url }}" target="_blank">
-                                <img src="{{ short.thumbnail_url }}" class="card-img-top" alt="{{ short.title }}">
-                            </a>
-                            <div class="card-body">
-                                <h5 class="card-title">{{ short.title }}</h5>
-                                <p class="card-text">{{ short.description|truncatewords:15 }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p>No YouTube Shorts available at the moment.</p>
-                {% endif %}
-            </div>
-        </div>
 
-        <!-- Arlo Recordings Section -->
-        <div id="nytimesCarousel" class="carousel slide mb-4" data-bs-ride="carousel" data-bs-interval="5000">
-            <!-- Indicators -->
-            <div class="carousel-indicators">
-                {% for headline in nytimes_headlines %}
-                <button type="button" data-bs-target="#nytimesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
-                        class="{% if forloop.first %}active{% endif %}" aria-current="true" aria-label="Slide {{ forloop.counter }}"></button>
-                {% endfor %}
-            </div>
+
+        
         
             <!-- Carousel Inner -->
             <div class="carousel-inner">
@@ -363,75 +326,73 @@ background-attachment: fixed;
         
     </div>
 
-    <!-- Right Column: Google Calendar Events -->
- <!-- Google Calendar Events Section -->
- <div class="col-md-6">
-    <div class="card">
-        <div class="card-header">
-            Upcoming Events
+    <div class="row mb-4">
+        <!-- Google Calendar Events Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    Upcoming Events
+                </div>
+                <div class="card-body">
+                    {% if events %}
+                    <ul class="list-group">
+                        {% for event in events %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div><strong>Date:</strong> {{ event.date }}</div>
+                                <div><strong>Time:</strong> {{ event.time|default:"N/A" }}</div>
+                            </div>
+                            <div><strong>Event:</strong> {{ event.summary }}</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="text-muted">No upcoming events.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            {% if events %}
-            <ul class="list-group">
-                {% for event in events %}
-                <li class="list-group-item">
-                    <div class="d-flex justify-content-between">
-                        <div><strong>Date:</strong> {{ event.date }}</div>
-                        <div><strong>Time:</strong> {{ event.time|default:"N/A" }}</div>
-                    </div>
-                    <div><strong>Event:</strong> {{ event.summary }}</div>
-                </li>
-                {% endfor %}
-            </ul>
-            {% else %}
-            <p class="text-muted">No upcoming events.</p>
-            {% endif %}
+    
+        <!-- Stock Market Section -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="card-title mb-0">Stock Market</h2>
+                </div>
+                <div class="card-body">
+                    {% if stocks %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover stock-table">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Symbol</th>
+                                        <th>Price</th>
+                                        <th>52WK HIGH</th>
+                                        <th>52WK LOW</th>
+                                        <th>CHANGE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for stock in stocks %}
+                                        <tr>
+                                            <td>{{ stock.symbol }}</td>
+                                            <td>{{ stock.price }}</td>
+                                            <td>{{ stock.fifty_two_week_high }}</td>
+                                            <td>{{ stock.fifty_two_week_low }}</td>
+                                            <td>{{ stock.fifty_two_week_change }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-white">No stock data available at the moment.</p>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </div>
-</div>
-</div>
-
-                    
-                    
     
-                    <!-- Stock Market Column -->
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h2 class="card-title mb-0">Stock Market</h2>
-                            </div>
-                            <div class="card-body">
-                                {% if stocks %}
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover stock-table">
-                                            <thead class="table-dark">
-                                                <tr>
-                                                    <th>Symbol</th>
-                                                    <th>Price</th>
-                                                    <th>52WK HIGH</th>
-                                                    <th>52WK LOW</th>
-                                                    <th>CHANGE</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for stock in stocks %}
-                                                    <tr>
-                                                        <td>{{ stock.symbol }}</td>
-                                                        <td>{{ stock.price }}</td>
-                                                        <td>{{ stock.fifty_two_week_high }}</td>
-                                                        <td>{{ stock.fifty_two_week_low }}</td>
-                                                        <td>{{ stock.fifty_two_week_change }}</td>
-                                                    </tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                {% else %}
-                                    <p class="text-white">No stock data available at the moment.</p>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
                     
                
                     

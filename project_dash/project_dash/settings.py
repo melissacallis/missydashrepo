@@ -25,6 +25,8 @@ load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+credentials_path = os.path.join(BASE_DIR, 'credentials.json')  # Ensure this file exists
+token_path = os.path.join(BASE_DIR, 'token.json')  # Where the token file will be created
 
 
 # Quick-start development settings - unsuitable for production
