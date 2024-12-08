@@ -89,11 +89,12 @@ def home(request):
     #stock_data = [get_stock_data(ticker) for ticker in stock_tickers]
 
     sports_headlines= fetch_sports_headlines()
+    # Simulate API response for videos (or replace with actual API call)
     
-    # Pass data to the template
-    # Fetch YouTube Shorts
-    youtube_shorts = fetch_youtube_shorts()
+
+    sports_videos = fetch_sports_headlines()
     
+  
         
     context = {
         'current': current_weather,
@@ -102,7 +103,7 @@ def home(request):
         'nytimes_headlines': nytimes_headlines,
         'zen_saying': get_zen_saying(),
         "stocks": stock_data,
-        "youtube_shorts": youtube_shorts,
+        'sports_videos': sports_videos,
         'sports_headlines': sports_headlines,
         
         }  # Add NY Times headlines to the
@@ -124,60 +125,34 @@ def get_zen_saying():
     return random.choice(sayings)
 
 
+import http.client
+import json
+
 def fetch_sports_headlines():
     """Fetch sports headlines from the NFL API."""
-    conn = http.client.HTTPSConnection("nfl-football-api.p.rapidapi.com")
+    conn = http.client.HTTPSConnection("tvpro-api.p.rapidapi.com")
     headers = {
         'x-rapidapi-key': "ffda10e22cmshcb6236d6bc8f365p1b8b5djsn88764eb5fd75",
-        'x-rapidapi-host': "nfl-football-api.p.rapidapi.com"
+        'x-rapidapi-host': "tvpro-api.p.rapidapi.com"
     }
 
     try:
-        conn.request("GET", "/nfl-single-news?id=40342801", headers=headers)
+        conn.request("GET", "/apps-oficial.com/apps/views/forms/entretenimiento/api_tv?mod=tv&RapidApi=jlospino", headers=headers)
         res = conn.getresponse()
         data = res.read()
 
         # Decode JSON response
         articles = json.loads(data.decode("utf-8"))
 
-        headlines = []
-        # Process the main headlines
-        for article in articles.get('headlines', []):
-            headline = article.get('title', 'No headline available')
-            description = article.get('description', '')
-            image_url = article.get('images', [{}])[0].get('url', '') if article.get('images') else ''
-            web_url = article.get('links', {}).get('web', {}).get('href', '#')
+             
+        print(articles)
+        return articles
 
-            if image_url:  # Ensure main headline has an image
-                headlines.append({
-                    'headline': headline,
-                    'description': description,
-                    'image_url': image_url,
-                    'web_url': web_url,
-                })
-
-            # Process related articles
-            for related in article.get('related', []):
-                related_headline = related.get('title', 'No related headline available')
-                related_image_url = related.get('images', [{}])[0].get('url', '') if related.get('images') else ''
-                related_web_url = related.get('links', {}).get('web', {}).get('href', '#')
-
-                if related_image_url:  # Ensure related article has an image
-                    headlines.append({
-                        'headline': related_headline,
-                        'description': '',
-                        'image_url': related_image_url,
-                        'web_url': related_web_url,
-                    })
-
-        print("Processed headlines for template:", headlines)
-        return headlines
     except Exception as e:
         print(f"Error fetching sports headlines: {e}")
         return []
 
-    
-    
+  
 def get_yahoo_stock_data(ticker):
     """
     Fetch and print all raw stock data from the Yahoo Finance API for debugging.
@@ -363,73 +338,6 @@ def fetch_nytimes_headlines():
 
 
 
-
-
-def fetch_youtube_shorts():
-    """
-    Fetch the top two sports-related YouTube Shorts.
-    """
-    
-    API_KEY = os.getenv("YOUTUBE_API_KEY")
-
-    if not API_KEY:
-        print("YouTube API key not found in environment variables.")
-        return []
-
-    # Build the YouTube API client
-    youtube = build("youtube", "v3", developerKey=API_KEY)
-
-    # Define search parameters
-    search_params = {
-        "part": "snippet",
-        "maxResults": 10,  # Fetch more results to filter later
-        "q": "sports #shorts",  # Include "sports" keyword and Shorts hashtag
-        "type": "video",
-        "videoDuration": "any",  # Fetch videos of any length
-        "order": "viewCount",    # Order by view count
-        "safeSearch": "moderate" # Safe search filter
-    }
-
-    try:
-        # Fetch search results
-        response = youtube.search().list(**search_params).execute()
-        video_ids = [item["id"]["videoId"] for item in response.get("items", [])]
-
-        # Fetch video details for duration and filtering
-        videos_response = youtube.videos().list(
-            part="snippet,contentDetails",
-            id=",".join(video_ids)
-        ).execute()
-
-        shorts = []
-        for video in videos_response.get("items", []):
-            duration = video["contentDetails"]["duration"]
-            snippet = video["snippet"]
-            duration_seconds = isodate.parse_duration(duration).total_seconds()
-
-            # Filter for videos less than or equal to 60 seconds
-            if duration_seconds <= 60:
-                shorts.append({
-                    "video_id": video["id"],
-                    "title": snippet["title"],
-                    "description": snippet["description"],
-                    "thumbnail_url": snippet["thumbnails"]["high"]["url"],
-                    "video_url": f"https://www.youtube.com/watch?v={video['id']}"
-                })
-
-            # Stop when we have 2 Shorts
-            if len(shorts) == 2:
-                break
-
-        return shorts
-
-    except Exception as e:
-        print(f"Error fetching YouTube Shorts: {e}")
-        return []
-
-    except Exception as e:
-        print(f"Error fetching YouTube Shorts: {e}")
-        return []
 
 
 
