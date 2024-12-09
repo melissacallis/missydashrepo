@@ -68,7 +68,8 @@ def home(request):
         for item in forecast_data['list'][:5]
     ]
 
-
+    year = "2022"
+    nfl_data=fetch_nfl_data(year)
 
     # Fetch calendar events
     calendar_events = fetch_calendar_events()
@@ -103,6 +104,7 @@ def home(request):
         'zen_saying': get_zen_saying(),
         "stocks": stock_data,
         'sports_headlines': sports_headlines,
+        'nfl_data':nfl_data,
         
         }  # Add NY Times headlines to the
     
@@ -257,12 +259,6 @@ def fetch_weather():
 
 
 
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-import os
-from datetime import datetime
-from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
@@ -427,53 +423,40 @@ import json
 import http.client
 import json
 
-def fetch_nfl_data():
+
+def fetch_nfl_data(year):
     """
-    Fetches NFL team data from the NFL API using RapidAPI.
+    Fetches the NFL weekly schedule for a specific year using RapidAPI.
+
+    Args:
+        year (str): The year for which to fetch the schedule (e.g., "2022").
     
     Returns:
         dict: Parsed JSON data if the request is successful.
         None: If the request fails.
     """
+    url = "https://sports-information.p.rapidapi.com/nfl/weekly-schedule"
+    querystring = {"year": year}  # Ensure year is passed as an argument
+    headers = {
+        "x-rapidapi-key": "ffda10e22cmshcb6236d6bc8f365p1b8b5fd75",
+        "x-rapidapi-host": "sport-highlights-api.p.rapidapi.com"
+    }
+
     try:
-        # Create an HTTPS connection to the API host
-        conn = http.client.HTTPSConnection("nfl-api-data.p.rapidapi.com")
-        
-        # Define the headers with the API key and host
-        headers = {
-            'x-rapidapi-key': "ffda10e22cmshcb6236d6bc8f365p1b8b5djsn88764eb5fd75",
-            'x-rapidapi-host': "nfl-api-data.p.rapidapi.com"
-        }
-        
-        # Make a GET request to the API endpoint
-        conn.request("GET", "/nfl-team-listing/v1/data", headers=headers)
-        
-        # Get the response and check status
-        res = conn.getresponse()
-        print(f"HTTP Response Status: {res.status}")
-        print(f"HTTP Response Reason: {res.reason}")
-        
-        # Read and parse the data
-        data = res.read()
-        if res.status == 200:
-            parsed_data = json.loads(data.decode("utf-8"))
-            return parsed_data
+        response = requests.get(url, headers=headers, params=querystring)
+
+        # Check if the response is successful
+        if response.status_code == 200:
+            return response.json()  # Parse and return the JSON data
         else:
-            print(f"Error: {data.decode('utf-8')}")
+            print(f"Error: Received status code {response.status_code}")
+            print(f"Response: {response.text}")
             return None
 
-    except Exception as e:
+    except requests.RequestException as e:
         print(f"An error occurred: {e}")
         return None
 
-# Example usage
-if __name__ == "__main__":
-    nfl_data = fetch_nfl_data()
-    if nfl_data:
-        print("Fetched Data:")
-        print(json.dumps(nfl_data, indent=4))
-    else:
-        print("No data received.")
 
 
 
