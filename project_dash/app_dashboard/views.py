@@ -13,6 +13,8 @@ import isodate
 import yfinance as yf
 import http.client
 import json
+from datetime import datetime, timedelta
+
 
 
 
@@ -66,12 +68,10 @@ def home(request):
         for item in forecast_data['list'][:5]
     ]
 
-    # Fetch Google Calendar events
-       # Authenticate and get the service
-    service = authenticate_and_get_service()
+
 
     # Fetch calendar events
-    calendar_events = fetch_calendar_events(service)
+    calendar_events = fetch_calendar_events()
     
     zen_saying = get_zen_saying()
 
@@ -266,67 +266,118 @@ from googleapiclient.discovery import build
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-def authenticate_and_get_service():
-    """Authenticate and return a Google Calendar API service object."""
-    creds = None
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+def generate_token():
+    credentials_path = "credentials.json"  # Path to your credentials.json
+    scopes = ['https://www.googleapis.com/auth/calendar.readonly']
 
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'credentials.json', SCOPES)
-            
-            # Specify the redirect URI explicitly
-            flow.redirect_uri = "https://musical-space-system-p4pjw7w57gr279v9-8000.app.github.dev/"
-            
-            creds = flow.run_local_server(port=0)
+    # Run OAuth flow
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes)
+    creds = flow.run_local_server(port=0)
 
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+    # Save tokens to token.json
+    with open("token.json", "w") as token_file:
+        token_data = {
+            "client_id": creds.client_id,
+            "client_secret": creds.client_secret,
+            "refresh_token": creds.refresh_token,
+            "type": "authorized_user"
+        }
+        json.dump(token_data, token_file, indent=4)
 
-    service = build('calendar', 'v3', credentials=creds)
-    return service
+    print("Token saved to token.json")
+
+if __name__ == "__main__":
+    generate_token()
 
 
-def fetch_calendar_events(service):
-    """Fetch the last 7 days of Google Calendar events."""
-    now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-    seven_days_ago = (datetime.utcnow() - timedelta(days=7)).isoformat() + 'Z'
-    
-    # Call the Calendar API to fetch events
-    events_result = service.events().list(
-        calendarId='primary',
-        timeMin=seven_days_ago,
-        timeMax=now,
-        singleEvents=True,
-        orderBy='startTime'
-    ).execute()
-    
-    events = events_result.get('items', [])
-    
-    if not events:
-        print('No events found.')
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+def fetch_calendar_events():
+    # Load credentials
+    creds = load_credentials()
+    if not creds:
+        print("Failed to load credentials.")
         return []
-    
-    # Format events
-    formatted_events = []
-    for event in events:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        summary = event.get('summary', 'No Title')
-        formatted_events.append({'start': start, 'summary': summary})
-        print(f"{start} - {summary}")
-    
-    return formatted_events
 
-if __name__ == '__main__':
-    # Authenticate and fetch calendar events
-    service = authenticate_and_get_service()
-    events = fetch_calendar_events(service)
+    try:
+        # Initialize the Google Calendar API client
+        service = build('calendar', 'v3', credentials=creds)
+        
+        # Define the time range for the next 7 days
+        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        week_later = (datetime.utcnow() + timedelta(days=7)).isoformat() + 'Z'
 
+        # Fetch events from the primary calendar
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=now,
+            timeMax=week_later,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+
+        # Extract and format events
+        events = events_result.get('items', [])
+        formatted_events = [
+            {
+                'summary': event.get('summary', 'No Title'),
+                'start': event['start'].get('dateTime', event['start'].get('date')),
+                'end': event['end'].get('dateTime', event['end'].get('date')),
+                'timeZone': event['start'].get('timeZone', 'UTC'),
+            }
+            for event in events
+        ]
+
+        return formatted_events
+
+    except HttpError as error:
+        print(f"An error occurred: {error}")
+        return []
+
+import json
+from google.oauth2.credentials import Credentials
+
+def load_credentials():
+    try:
+        with open("token.json", "r") as file:
+            data = json.load(file)
+        return Credentials.from_authorized_user_info(data, scopes=['https://www.googleapis.com/auth/calendar.readonly'])
+    except FileNotFoundError:
+        print("Token file not found. Run the OAuth flow to generate token.json.")
+        return None
+    except Exception as e:
+        print(f"Error loading credentials: {e}")
+        return None
+
+def generate_token():
+    # Path to your credentials.json file
+    credentials_path = "/workspaces/missydashrepo/project_dash/credentials.json"
+    scopes = ['https://www.googleapis.com/auth/calendar.readonly']
+
+    # Verify the file exists
+    if not os.path.exists(credentials_path):
+        print(f"Error: credentials.json not found at {credentials_path}")
+        return
+
+    # Run the OAuth flow
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes)
+    creds = flow.run_local_server(port=0)
+
+    # Save the tokens to token.json
+    with open("token.json", "w") as token_file:
+        token_data = {
+            "client_id": creds.client_id,
+            "client_secret": creds.client_secret,
+            "refresh_token": creds.refresh_token,
+            "type": "authorized_user"
+        }
+        json.dump(token_data, token_file, indent=4)
+
+    print("Token saved to token.json")
+
+if __name__ == "__main__":
+    generate_token()
     
 def fetch_nytimes_headlines():
     """
@@ -369,6 +420,62 @@ def fetch_nytimes_headlines():
     except Exception as e:
         print(f"Error fetching NY Times headlines: {e}")
         return []
+
+import http.client
+import json
+
+import http.client
+import json
+
+def fetch_nfl_data():
+    """
+    Fetches NFL team data from the NFL API using RapidAPI.
+    
+    Returns:
+        dict: Parsed JSON data if the request is successful.
+        None: If the request fails.
+    """
+    try:
+        # Create an HTTPS connection to the API host
+        conn = http.client.HTTPSConnection("nfl-api-data.p.rapidapi.com")
+        
+        # Define the headers with the API key and host
+        headers = {
+            'x-rapidapi-key': "ffda10e22cmshcb6236d6bc8f365p1b8b5djsn88764eb5fd75",
+            'x-rapidapi-host': "nfl-api-data.p.rapidapi.com"
+        }
+        
+        # Make a GET request to the API endpoint
+        conn.request("GET", "/nfl-team-listing/v1/data", headers=headers)
+        
+        # Get the response and check status
+        res = conn.getresponse()
+        print(f"HTTP Response Status: {res.status}")
+        print(f"HTTP Response Reason: {res.reason}")
+        
+        # Read and parse the data
+        data = res.read()
+        if res.status == 200:
+            parsed_data = json.loads(data.decode("utf-8"))
+            return parsed_data
+        else:
+            print(f"Error: {data.decode('utf-8')}")
+            return None
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+# Example usage
+if __name__ == "__main__":
+    nfl_data = fetch_nfl_data()
+    if nfl_data:
+        print("Fetched Data:")
+        print(json.dumps(nfl_data, indent=4))
+    else:
+        print("No data received.")
+
+
 
        
 
