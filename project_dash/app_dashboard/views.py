@@ -68,9 +68,9 @@ def home(request):
         for item in forecast_data['list'][:5]
     ]
 
-    year = "2022"
-    nfl_data=fetch_nfl_data(year)
-
+    # Fetch sports headlines and details using scraping
+    articles = scrape_featured_stories("https://www.foxsports.com")  # Replace URL with the actual one
+   
     # Fetch calendar events
     calendar_events = fetch_calendar_events()
     
@@ -93,7 +93,7 @@ def home(request):
     # Fetch sports-headline data
     #stock_data = [get_stock_data(ticker) for ticker in stock_tickers]
 
-    sports_headlines= fetch_sports_headlines()
+    
     
           
     context = {
@@ -102,17 +102,16 @@ def home(request):
         'events': calendar_events,
         'nytimes_headlines': nytimes_headlines,
         'zen_saying': get_zen_saying(),
-        "stocks": stock_data,
-        'sports_headlines': sports_headlines,
-        'nfl_data':nfl_data,
-        
+        "stocks": stock_data,        
+        'articles': articles,
         }  # Add NY Times headlines to the
     
    
     
 
-    
+    print(articles)
     return render(request, 'app_dashboard/home.html', context)
+
 
 def get_zen_saying():
     sayings = [
@@ -125,57 +124,79 @@ def get_zen_saying():
     return random.choice(sayings)
 
 
-def fetch_sports_headlines():
-    """Fetch sports headlines from the NFL API."""
-    conn = http.client.HTTPSConnection("nfl-football-api.p.rapidapi.com")
-    headers = {
-        'x-rapidapi-key': "ffda10e22cmshcb6236d6bc8f365p1b8b5djsn88764eb5fd75",
-        'x-rapidapi-host': "nfl-football-api.p.rapidapi.com"
-    }
+from bs4 import BeautifulSoup
+import requests
 
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from bs4 import BeautifulSoup
+import time
+
+import requests
+from bs4 import BeautifulSoup
+
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_featured_stories(url):
+    """
+    Scrape the title and image from specific divs with data-v-53b7e5d8.
+
+    Args:
+        url (str): The URL of the webpage to scrape.
+
+    Returns:
+        list[dict]: A list of dictionaries containing the title and image URL.
+    """
     try:
-        conn.request("GET", "/nfl-single-news?id=40342801", headers=headers)
-        res = conn.getresponse()
-        data = res.read()
+        # Fetch the webpage
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an HTTPError for bad responses
 
-        # Decode JSON response
-        articles = json.loads(data.decode("utf-8"))
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-        headlines = []
-        # Process the main headlines
-        for article in articles.get('headlines', []):
-            headline = article.get('title', 'No headline available')
-            description = article.get('description', '')
-            image_url = article.get('images', [{}])[0].get('url', '') if article.get('images') else ''
-            web_url = article.get('links', {}).get('web', {}).get('href', '#')
+        # Find all `a` tags with the desired class
+        articles = []
+        for card in soup.find_all('a', class_='card-inner-grid card-story'):
+            title = None
+            image_url = None
 
-            if image_url:  # Ensure main headline has an image
-                headlines.append({
-                    'headline': headline,
-                    'description': description,
-                    'image_url': image_url,
-                    'web_url': web_url,
+            # Extract the title from h2 with class 'card-title'
+            title_element = card.find('h2', class_='card-title')
+            if title_element:
+                title = title_element.text.strip()
+
+            # Extract the image URL from <img> inside the `picture` tag
+            image_element = card.find('img')
+            if image_element and image_element.has_attr('src'):
+                image_url = image_element['src']
+
+            # Append to the list if both title and image exist
+            if title and image_url:
+                articles.append({
+                    'title': title,
+                    'image_url': image_url
                 })
 
-            # Process related articles
-            for related in article.get('related', []):
-                related_headline = related.get('title', 'No related headline available')
-                related_image_url = related.get('images', [{}])[0].get('url', '') if related.get('images') else ''
-                related_web_url = related.get('links', {}).get('web', {}).get('href', '#')
+        return articles
 
-                if related_image_url:  # Ensure related article has an image
-                    headlines.append({
-                        'headline': related_headline,
-                        'description': '',
-                        'image_url': related_image_url,
-                        'web_url': related_web_url,
-                    })
-
-        print("Processed headlines for template:", headlines)
-        return headlines
-    except Exception as e:
-        print(f"Error fetching sports headlines: {e}")
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data from {url}: {e}")
         return []
+
+# Example usage
+if __name__ == "__main__":
+    url = "https://www.foxsports.com/stories"  # Replace with the actual URL
+    scraped_articles = scrape_title_and_image(url)
+
+    for index, article in enumerate(scraped_articles, 1):
+        print(f"Article {index}:")
+        print(f"Title: {article['title']}")
+        print(f"Image URL: {article['image_url']}")
+        print("-" * 50)
+
 
     
     

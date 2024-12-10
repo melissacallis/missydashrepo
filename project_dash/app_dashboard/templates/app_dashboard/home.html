@@ -326,6 +326,7 @@ background-attachment: fixed;
         
     </div>
 
+
     <div class="row mb-4">
         <!-- Google Calendar Events Section -->
         <div class="col-md-6">
@@ -394,50 +395,72 @@ background-attachment: fixed;
     </div>
     
                     
-               
-                    
-<!-- Sports Headlines Carousel Column -->
-<div id="sports-carousel-container" class="col-md-12">
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title mb-0">Sports Headlines</h2>
-        </div>
-        <div class="card-body">
-            {% if sports_headlines %}
-            <div id="sportsCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="30000">
-                <div class="carousel-inner">
-                    {% for item in sports_headlines %}
-                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                        <a href="{{ item.web_url }}" target="_blank">
-                            <img src="{{ item.image_url }}" class="d-block w-100 rounded" alt="{{ item.headline }}">
-                        </a>
-                        <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
-                            <h5>{{ item.headline }}</h5>
-                            <p>{{ item.description }}</p>
+   <div class="container mt-4">
+        <!-- Row for NYT Headlines and Zen Sayings -->
+        <div class="row">
+            <!-- NYT Headlines Carousel -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Featured NYT Headlines</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="nytimesCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <!-- Carousel Indicators -->
+                            <div class="carousel-indicators">
+                                {% for headline in nytimes_headlines %}
+                                <button type="button" data-bs-target="#nytimesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                                        class="{% if forloop.first %}active{% endif %}" 
+                                        aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Carousel Inner -->
+                            <div class="carousel-inner">
+                                {% for headline in nytimes_headlines %}
+                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                    <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}" style="max-height: 400px; object-fit: cover;">
+                                    <div class="carousel-caption d-none d-md-block">
+                                        <h5>{{ headline.title }}</h5>
+                                        <p>{{ headline.abstract }}</p>
+                                        <a href="{{ headline.url }}" class="btn btn-primary" target="_blank">Read More</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Controls -->
+                            <button class="carousel-control-prev" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                <span class="visually-hidden">Next</span>
+                            </button>
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
-
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#sportsCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#sportsCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
             </div>
-            {% else %}
-            <p>No sports headlines at this time.</p>
-            {% endif %}
+
+            <!-- Zen Sayings Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Zen Saying of the Day</h4>
+                    </div>
+                    <div class="card-body">
+                        <blockquote class="blockquote">
+                            <p class="mb-0">{{ zen_saying }}</p>
+                        </blockquote>
+                        <footer class="blockquote-footer">Find your inner peace</footer>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-</div>
-                        
-                        
+
+       
                     
 
 
