@@ -69,9 +69,7 @@ def home(request):
         for item in forecast_data['list'][:5]
     ]
 
-    # Fetch sports headlines and details using scraping
-    articles = scrape_featured_stories("https://www.foxsports.com")  # Replace URL with the actual one
-   
+       
     # Fetch calendar events
     calendar_events = fetch_calendar_events()
     
@@ -93,8 +91,26 @@ def home(request):
 
     # Fetch sports-headline data
     #stock_data = [get_stock_data(ticker) for ticker in stock_tickers]
+    # Fetch games for Week 1–2 (or more weeks as needed)
+# Get the current week dynamically
+    current_week = get_current_week()
 
-    
+    # Fetch games for the current week
+    nfl_games = fetch_week_games(week=current_week) 
+
+    # Construct context data
+    upcoming_nfl_games = []
+    for game in nfl_games:
+        game_date = datetime.strptime(game['gameDate'], "%Y%m%d").strftime("%B %d, %Y")
+        upcoming_nfl_games.append({
+            "gameID": game['gameID'],
+            "home": game['home'],
+            "away": game['away'],
+            "gameDate": game_date,
+            "gameTime": game['gameTime'],
+            "espnLink": game['espnLink'],
+            "cbsLink": game['cbsLink']
+        })   
     
           
     context = {
@@ -104,13 +120,15 @@ def home(request):
         'nytimes_headlines': nytimes_headlines,
         'zen_saying': get_zen_saying(),
         "stocks": stock_data,        
-        'articles': articles,
+        "current_week": current_week,
+        "upcoming_nfl_games": upcoming_nfl_games,
         }  # Add NY Times headlines to the
     
    
     
 
-    print(articles)
+    print("Game Scores Data/game_data:", current_week)
+    print(nfl_games)
     return render(request, 'app_dashboard/home.html', context)
 
 
@@ -166,7 +184,9 @@ def scrape_featured_stories(url):
                     'image_url': image_url
                 })
 
+        print(articles)
         return articles
+
 
     except requests.exceptions.RequestException as e:
         print(f"Error fetching data from {url}: {e}")
@@ -436,45 +456,71 @@ def fetch_nytimes_headlines():
         print(f"Error fetching NY Times headlines: {e}")
         return []
 
-import http.client
-import json
-
-import http.client
-import json
 
 
-def fetch_nfl_data(year):
+import requests
+
+from datetime import datetime, timedelta
+
+def get_current_week():
+    today = datetime.now()
+    # Assuming the NFL season starts on September 7, 2024 (adjust this date for other seasons)
+    season_start = datetime(2024, 9, 7)  # First game of the 2024 season
+    days_since_start = (today - season_start).days
+    # Calculate the current week (starting from Week 1)
+    current_week = (days_since_start // 7) + 1
+
+    # If today is Monday, fetch the next week's games
+    if today.weekday() == 0:  # Monday is 0
+        current_week += 1
+
+    return current_week
+
+
+import requests
+
+def fetch_games_from_api(week, season=2024, season_type="reg"):
     """
-    Fetches the NFL weekly schedule for a specific year using RapidAPI.
-
-    Args:
-        year (str): The year for which to fetch the schedule (e.g., "2022").
-    
-    Returns:
-        dict: Parsed JSON data if the request is successful.
-        None: If the request fails.
+    Helper function to fetch games for a specific week from the API.
     """
-    url = "https://sports-information.p.rapidapi.com/nfl/weekly-schedule"
-    querystring = {"year": year}  # Ensure year is passed as an argument
+    url = "https://tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com/getNFLGamesForWeek"
     headers = {
-        "x-rapidapi-key": "ffda10e22cmshcb6236d6bc8f365p1b8b5fd75",
-        "x-rapidapi-host": "sport-highlights-api.p.rapidapi.com"
+        'x-rapidapi-key': "c95415fdc2msh4b509827cdda6cfp1c3042jsn21c6a2c064a6",  # Replace with your actual API key
+        'x-rapidapi-host': "tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com"
     }
-
+    params = {
+        "week": week,
+        "seasonType": season_type,
+        "season": season
+    }
     try:
-        response = requests.get(url, headers=headers, params=querystring)
+        response = requests.get(url, headers=headers, params=params)
+        response.raise_for_status()  # Raise HTTPError for bad responses
+        data = response.json()
+        return data.get("body", [])  # Return game data or an empty list if not found
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching data for Week {week}: {e}")
+        return []
 
-        # Check if the response is successful
-        if response.status_code == 200:
-            return response.json()  # Parse and return the JSON data
-        else:
-            print(f"Error: Received status code {response.status_code}")
-            print(f"Response: {response.text}")
-            return None
 
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
-        return None
+def fetch_week_games(week, season=2024, season_type="reg"):
+    """
+    Fetch games for a single week using the helper function.
+    """
+    return fetch_games_from_api(week, season, season_type)
+
+
+def fetch_nfl_games(start_week, num_weeks, season=2024, season_type="reg"):
+    """
+    Fetch games for multiple weeks by calling the helper function in a loop.
+    """
+    all_games = []
+    for week in range(start_week, start_week + num_weeks):
+        print(f"Fetching games for Week {week}...")
+        week_games = fetch_games_from_api(week, season, season_type)
+        all_games.extend(week_games)
+    return all_games
+
 
 
 
