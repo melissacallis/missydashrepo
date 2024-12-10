@@ -14,6 +14,7 @@ import yfinance as yf
 import http.client
 import json
 from datetime import datetime, timedelta
+from bs4 import BeautifulSoup
 
 
 
@@ -123,21 +124,6 @@ def get_zen_saying():
     ]
     return random.choice(sayings)
 
-
-from bs4 import BeautifulSoup
-import requests
-
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from bs4 import BeautifulSoup
-import time
-
-import requests
-from bs4 import BeautifulSoup
-
-import requests
-from bs4 import BeautifulSoup
 
 def scrape_featured_stories(url):
     """
@@ -281,51 +267,88 @@ def fetch_weather():
 
 
 
+from google_auth_oauthlib.flow import InstalledAppFlow
+import json
+import os
+
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+CREDENTIALS_PATH = "/home/missy/missydashrepo/project_dash/credentials.json"
+TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
 
-def generate_token():
-    credentials_path = "credentials.json"  # Path to your credentials.json
-    scopes = ['https://www.googleapis.com/auth/calendar.readonly']
-
-    # Run OAuth flow
-    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes)
-    creds = flow.run_local_server(port=0)
-
-    # Save tokens to token.json
-    with open("token.json", "w") as token_file:
-        token_data = {
-            "client_id": creds.client_id,
-            "client_secret": creds.client_secret,
-            "refresh_token": creds.refresh_token,
-            "type": "authorized_user"
-        }
-        json.dump(token_data, token_file, indent=4)
-
-    print("Token saved to token.json")
-
-if __name__ == "__main__":
-    generate_token()
-
-
+import os
+import json
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from datetime import datetime, timedelta
+
+# Constants for paths and scopes
+CREDENTIALS_PATH = "/home/missy/missydashrepo/project_dash/credentials.json"
+TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+
+
+def generate_token():
+    """
+    Generates a token.json file by running the OAuth flow.
+    """
+    if not os.path.exists(CREDENTIALS_PATH):
+        print(f"Error: credentials.json not found at {CREDENTIALS_PATH}")
+        return
+
+    try:
+        # Initialize OAuth flow
+        flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
+        creds = flow.run_local_server(port=0)
+
+        # Save the token to token.json
+        with open(TOKEN_PATH, "w") as token_file:
+            token_data = {
+                "client_id": creds.client_id,
+                "client_secret": creds.client_secret,
+                "refresh_token": creds.refresh_token,
+                "type": "authorized_user"
+            }
+            json.dump(token_data, token_file, indent=4)
+        print(f"Token saved to {TOKEN_PATH}")
+
+    except Exception as e:
+        print(f"Error during token generation: {e}")
+
+
+def load_credentials():
+    """
+    Loads credentials from the token.json file.
+    Returns a Credentials object if successful, or None if the token is missing.
+    """
+    try:
+        with open(TOKEN_PATH, "r") as token_file:
+            data = json.load(token_file)
+        return Credentials.from_authorized_user_info(data, scopes=SCOPES)
+    except FileNotFoundError:
+        print(f"Error: token.json not found at {TOKEN_PATH}. Run the OAuth flow to generate it.")
+        return None
+    except Exception as e:
+        print(f"Error loading credentials: {e}")
+        return None
+
 
 def fetch_calendar_events():
-    # Load credentials
+    """
+    Fetches events from the Google Calendar API for the next 7 days.
+    Returns a list of events with their details.
+    """
     creds = load_credentials()
     if not creds:
-        print("Failed to load credentials.")
+        print("Failed to load credentials. Run generate_token() to generate a new token.")
         return []
 
     try:
-        # Initialize the Google Calendar API client
         service = build('calendar', 'v3', credentials=creds)
-        
-        # Define the time range for the next 7 days
-        now = datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        now = datetime.utcnow().isoformat() + 'Z'  # Current time in UTC
         week_later = (datetime.utcnow() + timedelta(days=7)).isoformat() + 'Z'
 
-        # Fetch events from the primary calendar
         events_result = service.events().list(
             calendarId='primary',
             timeMin=now,
@@ -352,49 +375,24 @@ def fetch_calendar_events():
         print(f"An error occurred: {error}")
         return []
 
-import json
-from google.oauth2.credentials import Credentials
-
-def load_credentials():
-    try:
-        with open("token.json", "r") as file:
-            data = json.load(file)
-        return Credentials.from_authorized_user_info(data, scopes=['https://www.googleapis.com/auth/calendar.readonly'])
-    except FileNotFoundError:
-        print("Token file not found. Run the OAuth flow to generate token.json.")
-        return None
-    except Exception as e:
-        print(f"Error loading credentials: {e}")
-        return None
-
-def generate_token():
-    # Path to your credentials.json file
-    credentials_path = "/workspaces/missydashrepo/project_dash/credentials.json"
-    scopes = ['https://www.googleapis.com/auth/calendar.readonly']
-
-    # Verify the file exists
-    if not os.path.exists(credentials_path):
-        print(f"Error: credentials.json not found at {credentials_path}")
-        return
-
-    # Run the OAuth flow
-    flow = InstalledAppFlow.from_client_secrets_file(credentials_path, scopes)
-    creds = flow.run_local_server(port=0)
-
-    # Save the tokens to token.json
-    with open("token.json", "w") as token_file:
-        token_data = {
-            "client_id": creds.client_id,
-            "client_secret": creds.client_secret,
-            "refresh_token": creds.refresh_token,
-            "type": "authorized_user"
-        }
-        json.dump(token_data, token_file, indent=4)
-
-    print("Token saved to token.json")
 
 if __name__ == "__main__":
-    generate_token()
+    # Check if token exists; if not, generate one
+    if not os.path.exists(TOKEN_PATH):
+        print("Token not found. Generating a new one...")
+        generate_token()
+
+    # Fetch and display calendar events
+    events = fetch_calendar_events()
+    if events:
+        print("Upcoming Events:")
+        for event in events:
+            print(f"Title: {event['summary']}")
+            print(f"Start: {event['start']} | End: {event['end']} | TimeZone: {event['timeZone']}")
+            print("-" * 50)
+    else:
+        print("No events found.")
+
     
 def fetch_nytimes_headlines():
     """

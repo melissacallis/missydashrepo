@@ -460,7 +460,33 @@ background-attachment: fixed;
         </div>
     </div>
 
-       
+     <!-- Fox Sports Info -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Latest Fox Sports Stories</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for story in fox_sports_info %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <img src="{{ story.image_url }}" class="card-img-top" alt="{{ story.title }}" style="max-height: 200px; object-fit: cover;">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ story.title }}</h5>
+                                        <p class="card-text">{{ story.category }}</p>
+                                        <a href="{{ story.link }}" class="btn btn-primary" target="_blank">Read More</a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>   
                     
 
 
