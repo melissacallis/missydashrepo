@@ -16,11 +16,6 @@ import json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 
-
-
-
-
-
 # Google Calendar API Scope
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
@@ -285,15 +280,6 @@ def fetch_weather():
     return current_weather, forecast_list
 
 
-
-
-from google_auth_oauthlib.flow import InstalledAppFlow
-import json
-import os
-
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-CREDENTIALS_PATH = "/home/missy/missydashrepo/project_dash/credentials.json"
-TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
 
 import os
 import json

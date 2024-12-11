@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<DOCTYPE html>
 
 {% load static %}
 <html lang="en">
@@ -198,6 +198,51 @@ background-attachment: fixed;
     }
 
 
+ /* NFL Table Styling */
+.nfl-table {
+    border: 1px solid #ddd; /* Add a subtle border */
+    border-radius: 5px; /* Round corners */
+    overflow: hidden; /* Ensure rounded borders work */
+    background-color: #f8f9fa; /* Light grey background for the entire table */
+}
+
+/* Header Styling */
+.nfl-table thead {
+    background-color: #212529; /* Dark background for header */
+    color: white; /* White text for contrast */
+    text-align: center; /* Center-align header text */
+    font-weight: bold; /* Bold header text */
+}
+
+/* Row Styling */
+.nfl-table tbody tr:nth-child(odd) {
+    background-color: rgba(255, 0, 0, 0.1); /* Light red background for odd rows */
+}
+
+.nfl-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 255, 0.1); /* Light blue background for even rows */
+}
+
+/* Font Colors */
+.nfl-table tbody tr td {
+    font-size: 0.9rem; /* Slightly smaller font */
+    color: #333; /* Dark grey for readability */
+}
+
+/* Center-align text in the table */
+.nfl-table td,
+.nfl-table th {
+    text-align: center;
+    vertical-align: middle;
+    padding: 8px;
+}
+
+/* Hover Effect */
+.nfl-table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.05); /* Slightly darker hover effect */
+}
+
+
 
 
 </style>
@@ -327,172 +372,188 @@ background-attachment: fixed;
     </div>
 
 
-    <div class="row mb-4">
-        <!-- Google Calendar Events Section -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    Upcoming Events
-                </div>
-                <div class="card-body">
-                    {% if events %}
-                    <ul class="list-group">
-                        {% for event in events %}
-                        <li class="list-group-item">
-                            <div class="d-flex justify-content-between">
-                                <div><strong>Date:</strong> {{ event.date }}</div>
-                                <div><strong>Time:</strong> {{ event.time|default:"N/A" }}</div>
-                            </div>
-                            <div><strong>Event:</strong> {{ event.summary }}</div>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <p class="text-muted">No upcoming events.</p>
-                    {% endif %}
-                </div>
+<div class="row mb-4">
+    <!-- Google Calendar Events Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Upcoming Events
             </div>
-        </div>
-    
-        <!-- Stock Market Section -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="card-title mb-0">Stock Market</h2>
-                </div>
-                <div class="card-body">
-                    {% if stocks %}
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover stock-table">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Symbol</th>
-                                        <th>Price</th>
-                                        <th>52WK HIGH</th>
-                                        <th>52WK LOW</th>
-                                        <th>CHANGE</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for stock in stocks %}
-                                        <tr>
-                                            <td>{{ stock.symbol }}</td>
-                                            <td>{{ stock.price }}</td>
-                                            <td>{{ stock.fifty_two_week_high }}</td>
-                                            <td>{{ stock.fifty_two_week_low }}</td>
-                                            <td>{{ stock.fifty_two_week_change }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+            <div class="card-body">
+                {% if events %}
+                <ul class="list-group">
+                    {% for event in events %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div><strong>Date:</strong> {{ event.date }}</div>
+                            <div><strong>Time:</strong> {{ event.time|default:"N/A" }}</div>
                         </div>
-                    {% else %}
-                        <p class="text-white">No stock data available at the moment.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-    
-                    
-   <div class="container mt-4">
-        <!-- Row for NYT Headlines and Zen Sayings -->
-        <div class="row">
-            <!-- NYT Headlines Carousel -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Featured NYT Headlines</h4>
-                    </div>
-                    <div class="card-body">
-                        <div id="nytimesCarousel" class="carousel slide" data-bs-ride="carousel">
-                            <!-- Carousel Indicators -->
-                            <div class="carousel-indicators">
-                                {% for headline in nytimes_headlines %}
-                                <button type="button" data-bs-target="#nytimesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
-                                        class="{% if forloop.first %}active{% endif %}" 
-                                        aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
-                                {% endfor %}
-                            </div>
-
-                            <!-- Carousel Inner -->
-                            <div class="carousel-inner">
-                                {% for headline in nytimes_headlines %}
-                                <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                    <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}" style="max-height: 400px; object-fit: cover;">
-                                    <div class="carousel-caption d-none d-md-block">
-                                        <h5>{{ headline.title }}</h5>
-                                        <p>{{ headline.abstract }}</p>
-                                        <a href="{{ headline.url }}" class="btn btn-primary" target="_blank">Read More</a>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-
-                            <!-- Controls -->
-                            <button class="carousel-control-prev" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Previous</span>
-                            </button>
-                            <button class="carousel-control-next" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Next</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Zen Sayings Card -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h4>Zen Saying of the Day</h4>
-                    </div>
-                    <div class="card-body">
-                        <blockquote class="blockquote">
-                            <p class="mb-0">{{ zen_saying }}</p>
-                        </blockquote>
-                        <footer class="blockquote-footer">Find your inner peace</footer>
-                    </div>
-                </div>
+                        <div><strong>Event:</strong> {{ event.summary }}</div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted">No upcoming events.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
-           <!-- NFL Games Table -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h4>NFL Week {{ current_week }} Schedule</h4>
-                </div>
-                <div class="card-body">
-                    <table class="table table-striped table-dark">
-                        <thead>
+    <!-- Stock Market Section -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h2 class="card-title mb-0">Stock Market</h2>
+            </div>
+            <div class="card-body">
+                {% if stocks %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover stock-table">
+                        <thead class="table-dark">
                             <tr>
-                                <th scope="col">Home</th>
-                                <th scope="col">Away</th>
-                                <th scope="col">Date</th>
-                                <th scope="col">Time</th>
+                                <th>Symbol</th>
+                                <th>Price</th>
+                                <th>52WK HIGH</th>
+                                <th>52WK LOW</th>
+                                <th>CHANGE</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for game in upcoming_nfl_games %}
+                            {% for stock in stocks %}
                             <tr>
-                                <td>{{ game.home }}</td>
-                                <td>{{ game.away }}</td>
-                                <td>{{ game.gameDate }}</td>
-                                <td>{{ game.gameTime }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="4" class="text-center">No games available for this week.</td>
+                                <td>{{ stock.symbol }}</td>
+                                <td>{{ stock.price }}</td>
+                                <td>{{ stock.fifty_two_week_high }}</td>
+                                <td>{{ stock.fifty_two_week_low }}</td>
+                                <td>{{ stock.fifty_two_week_change }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+                {% else %}
+                <p class="text-white">No stock data available at the moment.</p>
+                {% endif %}
             </div>
         </div>
+
+        <!-- Zen Sayings Section -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h4>Zen Saying of the Day</h4>
+            </div>
+            <div class="card-body">
+                <blockquote class="blockquote">
+                    <p class="mb-0">{{ zen_saying }}</p>
+                </blockquote>
+                <footer class="blockquote-footer">Find your inner peace</footer>
+            </div>
+        </div>
+            <!-- Scanner Audio Player Section -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h4>Corpus Christi Police, Fire, and EMS</h4>
+            </div>
+            <div class="card-body text-center">
+                <iframe 
+                    src="https://m.broadcastify.com/listen/feed/28708" 
+                    width="100%" 
+                    height="80" 
+                    frameborder="0" 
+                    allow="autoplay">
+                </iframe>
+                <p class="text-muted mt-2">Streaming live emergency services communications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+    
+                    
+ <div class="container mt-6">
+    <!-- Row for NYT Headlines and Zen Sayings -->
+    <div class="row">
+        <!-- NYT Headlines Carousel -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Featured NYT Headlines</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div id="nytimesCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <!-- Carousel Indicators -->
+                        <div class="carousel-indicators">
+                            {% for headline in nytimes_headlines %}
+                            <button type="button" data-bs-target="#nytimesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                                    class="{% if forloop.first %}active{% endif %}" 
+                                    aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Carousel Inner -->
+                        <div class="carousel-inner">
+                            {% for headline in nytimes_headlines %}
+                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}" style="max-height: 400px; object-fit: cover;">
+                                <div class="carousel-caption d-none">
+                                    <h5>{{ headline.title }}</h5>
+                                    <p class="headline-abstract">{{ headline.abstract }}</p>
+                                    <a href="{{ headline.url }}" class="btn btn-primary mt-2" target="_blank">Read More</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Controls -->
+                        <button class="carousel-control-prev" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Footer for Abstract -->
+                <div class="card-footer text-center" id="carouselFooter">
+                    <p class="headline-abstract"></p>
+                </div>
+            </div>
+        </div>
+   <!-- NFL Games Schedule Card -->
+<div class="col-md-4">
+    <div class="card">
+        <div class="card-header">
+            <h4>NFL Week {{ current_week }} Schedule</h4>
+        </div>
+        <div class="card-body p-2">
+            <table class="table table-sm table-striped nfl-table">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for game in upcoming_nfl_games %}
+                    <tr>
+                        <td>{{ game.home }}</td>
+                        <td>{{ game.away }}</td>
+                        <td>{{ game.gameDate }}</td>
+                        <td>{{ game.gameTime }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No games available for this week.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
     </div>
 </div>
 
@@ -553,4 +614,26 @@ background-attachment: fixed;
         "{% static 'images/background_image4.webp' %}",
         "{% static 'images/background_image5.webp' %}"
     ];
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.getElementById('nytimesCarousel');
+    const footer = document.getElementById('carouselFooter');
+    const abstractElement = footer.querySelector('.headline-abstract');
+
+    // Function to update the footer based on the active carousel item
+    function updateFooter() {
+        const activeItem = carousel.querySelector('.carousel-item.active');
+        const abstract = activeItem.querySelector('.headline-abstract').textContent;
+
+        // Update the footer with the current abstract
+        abstractElement.textContent = abstract;
+    }
+
+    // Update footer when the carousel slides
+    carousel.addEventListener('slid.bs.carousel', updateFooter);
+
+    // Initial update for the first active item
+    updateFooter();
+});
 </script>
