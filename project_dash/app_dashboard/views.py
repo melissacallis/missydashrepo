@@ -72,7 +72,8 @@ def home(request):
 
     # Fetch NY Times headlines
     nytimes_headlines = fetch_nytimes_headlines()
-    
+
+        
      # Default stock tickers
     stock_tickers = ["AAPL", "GOOGL", "MSFT", "MMLP"]
     
@@ -117,13 +118,14 @@ def home(request):
         "stocks": stock_data,        
         "current_week": current_week,
         "upcoming_nfl_games": upcoming_nfl_games,
+        
         }  # Add NY Times headlines to the
     
    
     
 
-    print("Game Scores Data/game_data:", current_week)
-    print(nfl_games)
+    #
+    
     return render(request, 'app_dashboard/home.html', context)
 
 
@@ -449,18 +451,29 @@ import requests
 from datetime import datetime, timedelta
 
 def get_current_week():
+    """
+    Determine the current NFL week (Sunday to Sunday).
+    The NFL 2024 season starts on Sunday, September 8, 2024 (adjust as necessary).
+    """
+    # NFL season start date
+    season_start_date = datetime(2024, 9, 8)  # First Sunday of the NFL season
     today = datetime.now()
-    # Assuming the NFL season starts on September 7, 2024 (adjust this date for other seasons)
-    season_start = datetime(2024, 9, 7)  # First game of the 2024 season
-    days_since_start = (today - season_start).days
-    # Calculate the current week (starting from Week 1)
+
+    # Calculate the number of days since the season started
+    days_since_start = (today - season_start_date).days
+
+    if days_since_start < 0:
+        # If before the season start, return week 0
+        return 0
+
+    # Determine the current week (weeks start on Sunday)
     current_week = (days_since_start // 7) + 1
 
-    # If today is Monday, fetch the next week's games
-    if today.weekday() == 0:  # Monday is 0
-        current_week += 1
+    # Adjust to ensure weeks run Sunday to Sunday
+    if today.weekday() < 6:  # If today is not Sunday
+        current_week -= 1
 
-    return current_week
+    return current_week + 2
 
 
 import requests
@@ -506,6 +519,10 @@ def fetch_nfl_games(start_week, num_weeks, season=2024, season_type="reg"):
         week_games = fetch_games_from_api(week, season, season_type)
         all_games.extend(week_games)
     return all_games
+
+
+
+
 
 
 
