@@ -235,7 +235,9 @@ CREDENTIALS_PATH = "/home/missy/missydashrepo/project_dash/credentials.json"
 TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
+TOKEN_PATH = 'token.json'
 
+TOKEN_PATH = 
 def generate_token(): 
     creds = None 
     if os.path.exists('token.json'):
