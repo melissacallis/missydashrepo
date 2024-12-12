@@ -222,115 +222,6 @@ def fetch_weather():
 
 
 
-import os
-import json
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from datetime import datetime, timedelta
-
-# Constants for paths and scopes
-CREDENTIALS_PATH = "/home/missy/missydashrepo/project_dash/credentials.json"
-TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
-
-TOKEN_PATH = 'token.json'
-
-TOKEN_PATH = 
-def generate_token(): 
-    creds = None 
-    if os.path.exists('token.json'):
-       creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    if not creds or not creds.valid: 
-        if creds and creds.expired and creds.refresh_token: 
-            creds.refresh(Request()) 
-        else: 
-            flow = InstalledAppFlow.from_client_secrets_file( 
-                'credentials.json', SCOPES) 
-            creds = flow.run_local_server(port=0) 
-            with open('token.json', 'w') as token: 
-                token.write(creds.to_json()) 
-generate_token()
-
-
-def load_credentials():
-    """
-    Loads credentials from the token.json file.
-    Returns a Credentials object if successful, or None if the token is missing.
-    """
-    try:
-        with open(TOKEN_PATH, "r") as token_file:
-            data = json.load(token_file)
-        return Credentials.from_authorized_user_info(data, scopes=SCOPES)
-    except FileNotFoundError:
-        print(f"Error: token.json not found at {TOKEN_PATH}. Run the OAuth flow to generate it.")
-        return None
-    except Exception as e:
-        print(f"Error loading credentials: {e}")
-        return None
-
-
-def fetch_calendar_events():
-    """
-    Fetches events from the Google Calendar API for the next 7 days.
-    Returns a list of events with their details.
-    """
-    creds = load_credentials()
-    if not creds:
-        print("Failed to load credentials. Run generate_token() to generate a new token.")
-        return []
-
-    try:
-        service = build('calendar', 'v3', credentials=creds)
-        now = datetime.utcnow().isoformat() + 'Z'  # Current time in UTC
-        week_later = (datetime.utcnow() + timedelta(days=7)).isoformat() + 'Z'
-
-        events_result = service.events().list(
-            calendarId='primary',
-            timeMin=now,
-            timeMax=week_later,
-            singleEvents=True,
-            orderBy='startTime'
-        ).execute()
-
-        # Extract and format events
-        events = events_result.get('items', [])
-        formatted_events = [
-            {
-                'summary': event.get('summary', 'No Title'),
-                'start': event['start'].get('dateTime', event['start'].get('date')),
-                'end': event['end'].get('dateTime', event['end'].get('date')),
-                'timeZone': event['start'].get('timeZone', 'UTC'),
-            }
-            for event in events
-        ]
-
-        return formatted_events
-
-    except HttpError as error:
-        print(f"An error occurred: {error}")
-        return []
-
-
-if __name__ == "__main__":
-    # Check if token exists; if not, generate one
-    if not os.path.exists(TOKEN_PATH):
-        print("Token not found. Generating a new one...")
-        generate_token()
-
-    # Fetch and display calendar events
-    events = fetch_calendar_events()
-    if events:
-        print("Upcoming Events:")
-        for event in events:
-            print(f"Title: {event['summary']}")
-            print(f"Start: {event['start']} | End: {event['end']} | TimeZone: {event['timeZone']}")
-            print("-" * 50)
-    else:
-        print("No events found.")
-
-    
 def fetch_nytimes_headlines():
     """
     Fetch the latest NY Times headlines using the Top Stories API.
@@ -374,10 +265,74 @@ def fetch_nytimes_headlines():
         return []
 
 
+# Google Calendar API Scope
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
-import requests
+TOKEN_PATH = os.path.join(os.path.dirname(__file__), 'token.json')
 
-from datetime import datetime, timedelta
+def generate_token():
+    creds = None
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+            with open(TOKEN_PATH, 'w') as token:
+                token.write(creds.to_json())
+
+generate_token()
+
+def load_credentials():
+    try:
+        with open(TOKEN_PATH, "r") as token_file:
+            data = json.load(token_file)
+        return Credentials.from_authorized_user_info(data, scopes=SCOPES)
+    except FileNotFoundError:
+        print(f"Error: token.json not found at {TOKEN_PATH}. Run the OAuth flow to generate it.")
+        return None
+    except Exception as e:
+        print(f"Error loading credentials: {e}")
+        return None
+
+def fetch_calendar_events():
+    creds = load_credentials()
+    if not creds:
+        print("Failed to load credentials. Run generate_token() to generate a new token.")
+        return []
+
+    try:
+        service = build('calendar', 'v3', credentials=creds)
+        now = datetime.utcnow().isoformat() + 'Z'
+        week_later = (datetime.utcnow() + timedelta(days=7)).isoformat() + 'Z'
+
+        events_result = service.events().list(
+            calendarId='primary',
+            timeMin=now,
+            timeMax=week_later,
+            singleEvents=True,
+            orderBy='startTime'
+        ).execute()
+
+        events = events_result.get('items', [])
+        formatted_events = [
+            {
+                'summary': event.get('summary', 'No Title'),
+                'start': event['start'].get('dateTime', event['start'].get('date')),
+                'end': event['end'].get('dateTime', event['end'].get('date')),
+                'timeZone': event['start'].get('timeZone', 'UTC'),
+            }
+            for event in events
+        ]
+
+        return formatted_events
+
+    except Exception as error:
+        print(f"An error occurred: {error}")
+        return []
+
 
 def get_current_week():
     """
