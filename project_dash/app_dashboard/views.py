@@ -140,68 +140,7 @@ def get_zen_saying():
     return random.choice(sayings)
 
 
-def scrape_featured_stories(url):
-    """
-    Scrape the title and image from specific divs with data-v-53b7e5d8.
 
-    Args:
-        url (str): The URL of the webpage to scrape.
-
-    Returns:
-        list[dict]: A list of dictionaries containing the title and image URL.
-    """
-    try:
-        # Fetch the webpage
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-
-        # Parse the HTML content
-        soup = BeautifulSoup(response.text, 'html.parser')
-
-        # Find all `a` tags with the desired class
-        articles = []
-        for card in soup.find_all('a', class_='card-inner-grid card-story'):
-            title = None
-            image_url = None
-
-            # Extract the title from h2 with class 'card-title'
-            title_element = card.find('h2', class_='card-title')
-            if title_element:
-                title = title_element.text.strip()
-
-            # Extract the image URL from <img> inside the `picture` tag
-            image_element = card.find('img')
-            if image_element and image_element.has_attr('src'):
-                image_url = image_element['src']
-
-            # Append to the list if both title and image exist
-            if title and image_url:
-                articles.append({
-                    'title': title,
-                    'image_url': image_url
-                })
-
-        print(articles)
-        return articles
-
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data from {url}: {e}")
-        return []
-
-# Example usage
-if __name__ == "__main__":
-    url = "https://www.foxsports.com/stories"  # Replace with the actual URL
-    scraped_articles = scrape_title_and_image(url)
-
-    for index, article in enumerate(scraped_articles, 1):
-        print(f"Article {index}:")
-        print(f"Title: {article['title']}")
-        print(f"Image URL: {article['image_url']}")
-        print("-" * 50)
-
-
-    
     
 def get_yahoo_stock_data(ticker):
     """
@@ -297,32 +236,20 @@ TOKEN_PATH = "/home/missy/missydashrepo/project_dash/token.json"
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 
 
-def generate_token():
-    """
-    Generates a token.json file by running the OAuth flow.
-    """
-    if not os.path.exists(CREDENTIALS_PATH):
-        print(f"Error: credentials.json not found at {CREDENTIALS_PATH}")
-        return
-
-    try:
-        # Initialize OAuth flow
-        flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-        creds = flow.run_local_server(port=0)
-
-        # Save the token to token.json
-        with open(TOKEN_PATH, "w") as token_file:
-            token_data = {
-                "client_id": creds.client_id,
-                "client_secret": creds.client_secret,
-                "refresh_token": creds.refresh_token,
-                "type": "authorized_user"
-            }
-            json.dump(token_data, token_file, indent=4)
-        print(f"Token saved to {TOKEN_PATH}")
-
-    except Exception as e:
-        print(f"Error during token generation: {e}")
+def generate_token(): 
+    creds = None 
+    if os.path.exists('token.json'):
+       creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if not creds or not creds.valid: 
+        if creds and creds.expired and creds.refresh_token: 
+            creds.refresh(Request()) 
+        else: 
+            flow = InstalledAppFlow.from_client_secrets_file( 
+                'credentials.json', SCOPES) 
+            creds = flow.run_local_server(port=0) 
+            with open('token.json', 'w') as token: 
+                token.write(creds.to_json()) 
+generate_token()
 
 
 def load_credentials():
