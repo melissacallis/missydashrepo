@@ -317,21 +317,24 @@ def fetch_calendar_events():
         ).execute()
 
         events = events_result.get('items', [])
-        formatted_events = [
-            {
+        formatted_events = []
+        for event in events:
+            start_time = event['start'].get('dateTime', event['start'].get('date'))
+            end_time = event['end'].get('dateTime', event['end'].get('date'))
+            formatted_events.append({
                 'summary': event.get('summary', 'No Title'),
-                'start': event['start'].get('dateTime', event['start'].get('date')),
-                'end': event['end'].get('dateTime', event['end'].get('date')),
+                'date': datetime.fromisoformat(start_time).strftime('%Y-%m-%d'),
+                'time': datetime.fromisoformat(start_time).strftime('%H:%M:%S') if 'T' in start_time else 'All Day',
                 'timeZone': event['start'].get('timeZone', 'UTC'),
-            }
-            for event in events
-        ]
+                'htmlLink': event.get('htmlLink', '#')
+            })
 
         return formatted_events
 
     except Exception as error:
         print(f"An error occurred: {error}")
         return []
+
 
 
 def get_current_week():
