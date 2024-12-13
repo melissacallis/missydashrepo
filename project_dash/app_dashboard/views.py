@@ -15,6 +15,7 @@ import http.client
 import json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
+import nfl_data_py as nfl
 
 # Google Calendar API Scope
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -85,29 +86,27 @@ def home(request):
             stock_data.append(data)
     #print(f"Stock data passed to template: {stock_data}")
 
-    # Fetch sports-headline data
-    #stock_data = [get_stock_data(ticker) for ticker in stock_tickers]
-    # Fetch games for Week 1–2 (or more weeks as needed)
-# Get the current week dynamically
-    current_week = get_current_week()
+    # Fetch NFL Schedule
+    year = datetime.now().year
+    week = 15  # Replace with dynamic week calculation if needed
+    weekly_schedule_df = fetch_weekly_schedule(year, week)
 
-    # Fetch games for the current week
-    nfl_games = fetch_week_games(week=current_week) 
+    if weekly_schedule_df is not None:
+        nfl_schedule = [
+            {
+                "home": row['home_team'],
+                "home_logo": construct_team_logo_url(row['home_team']),
+                "away": row['away_team'],
+                "away_logo": construct_team_logo_url(row['away_team']),
+                "gameDate": row['gameday'],
+                "gameTime": row['gametime']
+            }
+            for _, row in weekly_schedule_df.iterrows()
+        ]
+    else:
+        nfl_schedule = []
 
-    # Construct context data
-    upcoming_nfl_games = []
-    for game in nfl_games:
-        game_date = datetime.strptime(game['gameDate'], "%Y%m%d").strftime("%B %d, %Y")
-        upcoming_nfl_games.append({
-            "gameID": game['gameID'],
-            "home": game['home'],
-            "away": game['away'],
-            "gameDate": game_date,
-            "gameTime": game['gameTime'],
-            "espnLink": game['espnLink'],
-            "cbsLink": game['cbsLink']
-        })   
-    
+    # Other context data...
           
     context = {
         'current': current_weather,
@@ -116,8 +115,9 @@ def home(request):
         'nytimes_headlines': nytimes_headlines,
         'zen_saying': get_zen_saying(),
         "stocks": stock_data,        
-        "current_week": current_week,
-        "upcoming_nfl_games": upcoming_nfl_games,
+        "nfl_schedule": nfl_schedule,
+        "nfl_schedule": nfl_schedule,
+        "current_week": week,
         
         }  # Add NY Times headlines to the
     
@@ -335,77 +335,107 @@ def fetch_calendar_events():
         print(f"An error occurred: {error}")
         return []
 
+# Base URL for team logos
+BASE_URL = "https://www.sportshub.com/app/uploads/rdg-blocks/images/"
 
+# Team abbreviation to URL name dictionary
+TEAM_NAME_DICT = {
+    "ARI": "arizona-cardinals",
+    "ATL": "atlanta-falcons",
+    "BAL": "baltimore-ravens",
+    "BUF": "buffalo-bills",
+    "CAR": "carolina-panthers",
+    "CHI": "chicago-bears",
+    "CIN": "cincinnati-bengals",
+    "CLE": "cleveland-browns",
+    "DAL": "dallas-cowboys",
+    "DEN": "denver-broncos",
+    "DET": "detroit-lions",
+    "GB": "green-bay-packers",
+    "HOU": "houston-texans",
+    "IND": "indianapolis-colts",
+    "JAX": "jacksonville-jaguars",
+    "KC": "kansas-city-chiefs",
+    "LAC": "los-angeles-chargers",
+    "LAR": "los-angeles-rams",
+    "LV": "las-vegas-raiders",
+    "MIA": "miami-dolphins",
+    "MIN": "minnesota-vikings",
+    "NE": "new-england-patriots",
+    "NO": "new-orleans-saints",
+    "NYG": "new-york-giants",
+    "NYJ": "new-york-jets",
+    "PHI": "philadelphia-eagles",
+    "PIT": "pittsburgh-steelers",
+    "SEA": "seattle-seahawks",
+    "SF": "san-francisco-49ers",
+    "TB": "tampa-bay-buccaneers",
+    "TEN": "tennessee-titans",
+    "WAS": "washington-commanders"
+}
 
-def get_current_week():
+def construct_team_logo_url(team_abbr):
     """
-    Determine the current NFL week (Sunday to Sunday).
-    The NFL 2024 season starts on Sunday, September 8, 2024 (adjust as necessary).
+    Constructs the logo URL for a given team abbreviation.
+
+    Args:
+        team_abbr (str): The team abbreviation (e.g., "SF").
+
+    Returns:
+        str: The constructed URL or a placeholder if not found.
     """
-    # NFL season start date
-    season_start_date = datetime(2024, 9, 8)  # First Sunday of the NFL season
-    today = datetime.now()
+    team_name_url = TEAM_NAME_DICT.get(team_abbr)
+    if not team_name_url:
+        return "https://via.placeholder.com/50"  # Default placeholder URL
+    return f"{BASE_URL}{team_name_url}.webp"
 
-    # Calculate the number of days since the season started
-    days_since_start = (today - season_start_date).days
+import nfl_data_py as nfl
 
-    if days_since_start < 0:
-        # If before the season start, return week 0
-        return 0
-
-    # Determine the current week (weeks start on Sunday)
-    current_week = (days_since_start // 7) + 1
-
-    # Adjust to ensure weeks run Sunday to Sunday
-    if today.weekday() < 6:  # If today is not Sunday
-        current_week -= 1
-
-    return current_week + 2
-
-
-import requests
-
-def fetch_games_from_api(week, season=2024, season_type="reg"):
+def fetch_weekly_schedule(year, week):
     """
-    Helper function to fetch games for a specific week from the API.
+    Fetch the weekly schedule for a specific year and week.
+
+    Args:
+        year (int): The season year.
+        week (int): The week number.
+
+    Returns:
+        pandas.DataFrame: The filtered weekly schedule.
     """
-    url = "https://tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com/getNFLGamesForWeek"
-    headers = {
-        'x-rapidapi-key': "c95415fdc2msh4b509827cdda6cfp1c3042jsn21c6a2c064a6",  # Replace with your actual API key
-        'x-rapidapi-host': "tank01-nfl-live-in-game-real-time-statistics-nfl.p.rapidapi.com"
-    }
-    params = {
-        "week": week,
-        "seasonType": season_type,
-        "season": season
-    }
     try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()  # Raise HTTPError for bad responses
-        data = response.json()
-        return data.get("body", [])  # Return game data or an empty list if not found
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching data for Week {week}: {e}")
-        return []
+        # Fetch the full season schedule
+        schedule = nfl.import_schedules([year])
 
+        # Ensure the week column exists
+        if 'week' not in schedule.columns:
+            print(f"The schedule data does not contain a 'week' column.")
+            return None
 
-def fetch_week_games(week, season=2024, season_type="reg"):
-    """
-    Fetch games for a single week using the helper function.
-    """
-    return fetch_games_from_api(week, season, season_type)
+        # Filter for the specific week
+        weekly_schedule = schedule[schedule['week'] == week]
 
+        if weekly_schedule.empty:
+            print(f"No games found for Week {week} in {year}.")
+            return None
 
-def fetch_nfl_games(start_week, num_weeks, season=2024, season_type="reg"):
-    """
-    Fetch games for multiple weeks by calling the helper function in a loop.
-    """
-    all_games = []
-    for week in range(start_week, start_week + num_weeks):
-        print(f"Fetching games for Week {week}...")
-        week_games = fetch_games_from_api(week, season, season_type)
-        all_games.extend(week_games)
-    return all_games
+        print(f"Weekly Schedule for Week {week} ({year}):")
+        print(weekly_schedule[['home_team', 'away_team', 'gameday', 'gametime']])  # Example columns to display
+        return weekly_schedule
+
+    except Exception as e:
+        print(f"Error fetching schedule: {e}")
+        return None
+
+# Example usage
+if __name__ == "__main__":
+    year = 2024
+    week = 15
+    weekly_schedule = fetch_weekly_schedule(year, week)
+
+    if weekly_schedule is not None:
+        # Process the schedule further if needed
+        print("Schedule fetched successfully.")
+
 
 
 
