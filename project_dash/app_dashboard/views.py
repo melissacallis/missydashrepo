@@ -324,8 +324,9 @@ def fetch_calendar_events():
             formatted_events.append({
                 'summary': event.get('summary', 'No Title'),
                 'date': datetime.fromisoformat(start_time).strftime('%Y-%m-%d'),
-                'time': datetime.fromisoformat(start_time).strftime('%H:%M:%S') if 'T' in start_time else 'All Day',
+                'time': datetime.fromisoformat(start_time).strftime('%I:%M:%S %p') if 'T' in start_time else 'All Day',
                 'timeZone': event['start'].get('timeZone', 'UTC'),
+                'end_time': datetime.fromisoformat(end_time).strftime('%I:%M:%S %p') if 'T' in end_time else 'All Day', 
                 'htmlLink': event.get('htmlLink', '#')
             })
 
