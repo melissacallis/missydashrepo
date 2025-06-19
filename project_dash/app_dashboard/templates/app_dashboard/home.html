@@ -484,9 +484,9 @@ background-attachment: fixed;
               {% for game in nfl_schedule %}
               <tr>
                 <td>{{ game.home }}</td>
-                <td><img src="{{ game.home_logo }}" alt="{{ game.home }} Logo" style="width: 50px; height: auto;"></td>
+                <td><img src="{{ game.home_logo|default:'#' }}" alt="{{ game.home }} Logo" style="width: 50px; height: auto;"></td>
                 <td>{{ game.away }}</td>
-                <td><img src="{{ game.away_logo }}" alt="{{ game.away }} Logo" style="width: 50px; height: auto;"></td>
+                <td><img src="{{ game.away_logo|default:'#' }}" alt="{{ game.away }} Logo" style="width: 50px; height: auto;"></td>
                 <td>{{ game.gameDate }}</td>
                 <td>{{ game.gameTime }}</td>
               </tr>
