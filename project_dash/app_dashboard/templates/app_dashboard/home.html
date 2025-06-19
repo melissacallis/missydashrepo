@@ -373,7 +373,7 @@ background-attachment: fixed;
     </div>
 
     <!-- Group 2: NYT Headlines, Upcoming Events, Stocks (3 across) -->
-    <div class="col-md-4">
+       <div class="col-md-4">
       <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-warning text-dark">
           <h4>NYT Headlines</h4>
@@ -384,9 +384,10 @@ background-attachment: fixed;
               {% for headline in nytimes_headlines %}
               <div class="carousel-item {% if forloop.first %}active{% endif %}">
                 <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}">
-                <div class="carousel-caption d-none">
+                <div class="carousel-caption d-block bg-dark bg-opacity-75 rounded p-2">
                   <h5>{{ headline.title }}</h5>
                   <p class="headline-abstract">{{ headline.abstract }}</p>
+                  <a href="{{ headline.url }}" class="btn btn-sm btn-primary mt-2" target="_blank">Read More</a>
                 </div>
               </div>
               {% endfor %}
