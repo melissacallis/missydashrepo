@@ -15,7 +15,7 @@ import http.client
 import json
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-import nfl_data_py as nfl
+#import nfl_data_py as nfl
 
 # Google Calendar API Scope
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -390,7 +390,7 @@ def construct_team_logo_url(team_abbr):
         return "https://via.placeholder.com/50"  # Default placeholder URL
     return f"{BASE_URL}{team_name_url}.webp"
 
-import nfl_data_py as nfl
+
 
 def fetch_weekly_schedule(year, week):
     """

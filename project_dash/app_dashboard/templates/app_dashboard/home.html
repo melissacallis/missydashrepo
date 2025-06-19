@@ -317,7 +317,9 @@ background-attachment: fixed;
 }
 
 
-
+@media screen and (orientation: landscape) {
+  /* REMOVE THIS ENTIRE BLOCK */
+}
 
 </style>
 </head>
@@ -327,227 +329,137 @@ background-attachment: fixed;
     <body>
        <div class="container-fluid mt-4">
     <!-- Top Row: Current Time, Current Weather, and 5-Hour Forecast -->
-    <div class="row g-3">
-        <!-- Current Time -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card h-100">
-                <div class="card-header">
-                    <p id="current-day"></p>
-                </div>
-                <div class="card-body text-center">
-                    <h5 id="current-time" class="current-time time-text"></h5>
-                    <p id="current-day"></p>
-                </div>
-            </div>
+   <div class="container-fluid mt-4">
+  <div class="row g-3">
+    <!-- Group 1: Current Time, Weather, Forecast (3 across) -->
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <p id="current-day"></p>
         </div>
-
-        <!-- Current Weather -->
-        <div class="col-lg-3 col-md-6">
-            <div class="card h-100">
-                <div class="card-header text-center">
-                    Current Weather
-                </div>
-                <div class="card-body text-center">
-                    <h5 class="card-title">{{ current.temp }}°F</h5>
-                    <p class="card-text">{{ current.weather }}</p>
-                    <img src="http://openweathermap.org/img/wn/{{ current.icon }}@2x.png" alt="Weather icon">
-                </div>
-            </div>
+        <div class="card-body text-center">
+          <h5 id="current-time" class="current-time time-text"></h5>
+          <p id="current-day"></p>
         </div>
-
-        <!-- 5-Hour Weather Forecast -->
-        <div class="col-lg-6 col-md-12">
-            <div class="card h-100">
-                <div class="card-header text-center">
-                    <h5>5-Hour Weather Forecast</h5>
-                </div>
-                <div class="card-body d-flex justify-content-around">
-                    {% for forecast in forecast %}
-                    <div class="text-center">
-                        <h6>{{ forecast.datetime }}</h6>
-                        <img src="http://openweathermap.org/img/wn/{{ forecast.icon }}@2x.png" alt="Weather icon">
-                        <p><strong>{{ forecast.temp }}°F</strong></p>
-                        <p>{{ forecast.weather }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
 
-<div class="container mt-12">
-  <div class="row">
-    <div class="col-md-12">  <div class="card">
-        <div class="card-header">
-          <h4>Featured NYT Headlines</h4>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header text-center">
+          Current Weather
         </div>
-        <div class="card-body p-6">
-          <div id="nytimesCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-              {% for headline in nytimes_headlines %}
-              <button type="button" data-bs-target="#nytimesCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
-                class="{% if forloop.first %}active{% endif %}" 
-                aria-current="{% if forloop.first %}true{% endif %}" aria-label="Slide {{ forloop.counter }}"></button>
-              {% endfor %}
-            </div>
+        <div class="card-body text-center">
+          <h5 class="card-title">{{ current.temp }}°F</h5>
+          <p class="card-text">{{ current.weather }}</p>
+          <img src="http://openweathermap.org/img/wn/{{ current.icon }}@2x.png" alt="Weather icon">
+        </div>
+      </div>
+    </div>
 
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header text-center">
+          <h5>5-Hour Forecast</h5>
+        </div>
+        <div class="card-body d-flex justify-content-around">
+          {% for forecast in forecast %}
+          <div class="text-center">
+            <h6>{{ forecast.datetime }}</h6>
+            <img src="http://openweathermap.org/img/wn/{{ forecast.icon }}@2x.png" alt="Weather icon">
+            <p><strong>{{ forecast.temp }}°F</strong></p>
+            <p>{{ forecast.weather }}</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Group 2: NYT Headlines, Upcoming Events, Stocks (3 across) -->
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h4>NYT Headlines</h4>
+        </div>
+        <div class="card-body">
+          <div id="nytimesCarousel" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-inner">
               {% for headline in nytimes_headlines %}
               <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}" style="max-height: 400px; object-fit: cover;">
+                <img src="{{ headline.image_url }}" class="d-block w-100" alt="{{ headline.title }}">
                 <div class="carousel-caption d-none">
                   <h5>{{ headline.title }}</h5>
                   <p class="headline-abstract">{{ headline.abstract }}</p>
-                  <a href="{{ headline.url }}" class="btn btn-primary mt-2" target="_blank">Read More</a>
                 </div>
               </div>
               {% endfor %}
             </div>
-
-            <button class="carousel-control-prev" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="prev">
-              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#nytimesCarousel" data-bs-slide="next">
-              <span class="carousel-control-next-icon" aria-hidden="true"></span>
-              <span class="visually-hidden">Next</span>
-            </button>
           </div>
         </div>
-        <div class="card-footer text-center" id="carouselFooter">
-          <p class="headline-abstract"></p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5>Upcoming Events</h5>
+        </div>
+        <div class="card-body">
+          {% if events %}
+          <table class="table rainbow-striped">
+            <thead class="purple-header">
+              <tr><th>Date</th><th>Time</th><th>End</th><th>Event</th></tr>
+            </thead>
+            <tbody>
+              {% for event in events %}
+              <tr>
+                <td>{{ event.date }}</td>
+                <td>{{ event.time|default:"N/A" }}</td>
+                <td>{{ event.end_date }} {{ event.end_time|default:"N/A" }}</td>
+                <td>{{ event.summary }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="text-muted">No upcoming events.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100" style="background-color: #607D8B;">
+        <div class="card-header">
+          <h5>Stock Market</h5>
+        </div>
+        <div class="card-body">
+          {% if stocks %}
+          <table class="table table-striped table-hover stock-table">
+            <thead class="table-dark">
+              <tr>
+                <th>Symbol</th><th>Price</th><th>52WK HIGH</th><th>52WK LOW</th><th>CHANGE</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for stock in stocks %}
+              <tr>
+                <td>{{ stock.symbol }}</td>
+                <td>{{ stock.price }}</td>
+                <td>{{ stock.fifty_two_week_high }}</td>
+                <td>{{ stock.fifty_two_week_low }}</td>
+                <td>{{ stock.fifty_two_week_change }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="text-muted">No stock data available at the moment.</p>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
-</div>
-
-    <!-- Second Row: Upcoming Events and NFL Weekly Schedule -->
-<div class="row g-3 mt-3">
-    <!-- Upcoming Events -->
-    <div class="col-lg-6 col-md-12">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5>Upcoming Events</h5>
-            </div>
-            <div class="card-body">
-                {% if events %}
-                <div class="table-responsive">
-                    <table class="table rainbow-striped">
-                        <thead class="purple-header">
-                            <tr>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>End</th>
-                                <th>Event</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for event in events %}
-                            <tr>
-                                <td>{{ event.date }}</td>
-                                <td>{{ event.time|default:"N/A" }}</td>
-                                <td>{{ event.end_date }} {{ event.end_time|default:"N/A" }}</td>
-                                <td>{{ event.summary }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-muted">No upcoming events.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-  <!-- Stock Market -->
-<div class="col-lg-6 col-md-12">
-    <div class="card h-100" style="background-color: #607D8B;"> <!-- Yellow background -->
-        <div class="card-header">
-            <h5>Stock Market</h5>
-        </div>
-        <div class="card-body">
-            {% if stocks %}
-            <div class="table-responsive">
-                <table class="table table-striped table-hover stock-table">
-                    <thead class="table-dark">
-                        <tr class="text-center">
-                            <th>Symbol</th>
-                            <th>Price</th>
-                            <th>52WK HIGH</th>
-                            <th>52WK LOW</th>
-                            <th>CHANGE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for stock in stocks %}
-                        <tr class="text-center">
-                            <td>{{ stock.symbol }}</td>
-                            <td>{{ stock.price }}</td>
-                            <td>{{ stock.fifty_two_week_high }}</td>
-                            <td>{{ stock.fifty_two_week_low }}</td>
-                            <td>{{ stock.fifty_two_week_change }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="text-muted">No stock data available at the moment.</p>
-            {% endif %}
-            
-            <!-- Embedded Scanner Section -->
-            <div class="mt-4">
-                <h5 class="card-title">Corpus Christi Live Audio Scanner</h5>
-                <div class="scanner-embed">
-                    <iframe src="https://broadcastify.cdnstream1.com/28708" width="100%" height="200" frameborder="0" title="Corpus Christi Live Audio Scanner"></iframe>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
-
-       <div class="row g-3 mt-3">
-    <!-- NFL Weekly Schedule -->
-    <div class="col-12">
-        <div class="card h-100">
-            <div class="card-header">
-                <h5>NFL Week {{ current_week }} Schedule</h5>
-            </div>
-            <div class="card-body p-2">
-                <table class="table table-sm table-striped nfl-table">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Home</th>
-                            <th>Logo</th>
-                            <th>Away</th>
-                            <th>Logo</th>
-                            <th>Date</th>
-                            <th>Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for game in nfl_schedule %}
-                        <tr>
-                            <td>{{ game.home }}</td>
-                            <td><img src="{{ game.home_logo }}" alt="{{ game.home }} Logo" style="width: 50px; height: auto;"></td>
-                            <td>{{ game.away }}</td>
-                            <td><img src="{{ game.away_logo }}" alt="{{ game.away }} Logo" style="width: 50px; height: auto;"></td>
-                            <td>{{ game.gameDate }}</td>
-                            <td>{{ game.gameTime }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">No games available for this week.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
 </div>
 
 
