@@ -327,11 +327,11 @@ background-attachment: fixed;
 
 
     <body>
-       <div class="container-fluid mt-4">
+   <div class="container-fluid mt-4">
   <div class="row g-4">
     <!-- Group 1: Current Time, Weather, Forecast (3 across) -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-primary text-white text-center">
           <p id="current-day" class="mb-0"></p>
         </div>
@@ -342,7 +342,7 @@ background-attachment: fixed;
     </div>
 
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-info text-white text-center">
           Current Weather
         </div>
@@ -355,7 +355,7 @@ background-attachment: fixed;
     </div>
 
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-success text-white text-center">
           <h5>5-Hour Forecast</h5>
         </div>
@@ -374,7 +374,7 @@ background-attachment: fixed;
 
     <!-- Group 2: NYT Headlines, Upcoming Events, Stocks (3 across) -->
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-warning text-dark">
           <h4>NYT Headlines</h4>
         </div>
@@ -397,19 +397,19 @@ background-attachment: fixed;
     </div>
 
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-secondary text-white">
           <h5>Upcoming Events</h5>
         </div>
         <div class="card-body">
           {% if events %}
-          <table class="table table-sm table-striped table-hover text-light">
-            <thead class="table-dark">
+          <table class="table table-sm table-hover text-white">
+            <thead class="bg-dark text-white">
               <tr><th>Date</th><th>Time</th><th>End</th><th>Event</th></tr>
             </thead>
             <tbody>
               {% for event in events %}
-              <tr>
+              <tr style="background-color: rgba(255, 255, 255, 0.05);">
                 <td>{{ event.date }}</td>
                 <td>{{ event.time|default:"N/A" }}</td>
                 <td>{{ event.end_date }} {{ event.end_time|default:"N/A" }}</td>
@@ -426,13 +426,13 @@ background-attachment: fixed;
     </div>
 
     <div class="col-md-4">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-danger text-white">
           <h5>Stock Market</h5>
         </div>
         <div class="card-body">
           {% if stocks %}
-          <table class="table table-sm table-striped table-hover text-light">
+          <table class="table table-sm table-striped table-hover text-white">
             <thead class="table-dark">
               <tr>
                 <th>Symbol</th><th>Price</th><th>52WK HIGH</th><th>52WK LOW</th><th>CHANGE</th>
@@ -456,7 +456,7 @@ background-attachment: fixed;
 
           <div class="mt-4">
             <h5 class="card-title">Corpus Christi Live Audio Scanner</h5>
-            <iframe src="https://broadcastify.cdnstream1.com/28708" width="100%" height="200" frameborder="0" title="Corpus Christi Live Audio Scanner"></iframe>
+            <iframe src="https://www.broadcastify.com/listen/feed/28708/web" width="100%" height="200" frameborder="0" title="Corpus Christi Live Audio Scanner"></iframe>
           </div>
         </div>
       </div>
@@ -464,7 +464,7 @@ background-attachment: fixed;
 
     <!-- Group 3: NFL Schedule -->
     <div class="col-md-12">
-      <div class="card h-100 shadow-lg bg-dark text-light">
+      <div class="card h-100 shadow-lg bg-gradient bg-dark text-light border-light">
         <div class="card-header bg-purple text-white">
           <h5>NFL Week {{ current_week }} Schedule</h5>
         </div>
@@ -484,9 +484,9 @@ background-attachment: fixed;
               {% for game in nfl_schedule %}
               <tr>
                 <td>{{ game.home }}</td>
-                <td><img src="{{ game.home_logo|default:'#' }}" alt="{{ game.home }} Logo" style="width: 50px; height: auto;"></td>
+                <td><img src="{{ game.home_logo }}" alt="{{ game.home }} Logo" style="width: 50px; height: auto; background-color: white;"></td>
                 <td>{{ game.away }}</td>
-                <td><img src="{{ game.away_logo|default:'#' }}" alt="{{ game.away }} Logo" style="width: 50px; height: auto;"></td>
+                <td><img src="{{ game.away_logo }}" alt="{{ game.away }} Logo" style="width: 50px; height: auto; background-color: white;"></td>
                 <td>{{ game.gameDate }}</td>
                 <td>{{ game.gameTime }}</td>
               </tr>
@@ -503,6 +503,7 @@ background-attachment: fixed;
 
   </div>
 </div>
+
 
 
 
